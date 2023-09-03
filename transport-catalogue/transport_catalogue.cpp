@@ -1,15 +1,15 @@
 #include "transport_catalogue.h"
 
 
-namespace Transport {
+namespace transport {
 	using namespace std;
-	void TransportCatalogue::AddStop(Stop stop)
+	void TransportCatalogue::AddStop(const info::Stop& stop)
 	{
 		stops_.push_back(move(stop));
 		stopname_to_stop_[stops_.back().name] = &stops_.back();
 	}
 
-	void TransportCatalogue::AddBuss(std::string& name, const std::vector<std::string>& stops)
+	void TransportCatalogue::AddBus(const std::string& name, const std::vector<std::string>& stops)
 	{
 		Bus bus;
 		bus.name = move(name);
@@ -20,56 +20,56 @@ namespace Transport {
 		busname_to_stop_[buses_.back().name] = &buses_.back();
 	}
 
-	void TransportCatalogue::AddLength(const std::string name_from, const std::string& name_to, unsigned l)
+	void TransportCatalogue::AddLength(const std::string& name_from, const std::string& name_to, unsigned length)
 	{
 		auto key = make_pair(stopname_to_stop_.at(name_from), stopname_to_stop_.at(name_to));
-		length_[key] = l;
+		length_[key] = length;
 	}
 
-	TransportCatalogue::Stop TransportCatalogue::FindStop(const std::string& name)
+	info::Stop* TransportCatalogue::FindStop(const std::string_view name)
 	{
 		if (stopname_to_stop_.count(name)) {
-			return *stopname_to_stop_.at(name);
+			return stopname_to_stop_.at(name);
 		}
-		return Stop();
+		return nullptr;
 	}
 
-	TransportCatalogue::Bus TransportCatalogue::FindBus(const std::string& name)
+	TransportCatalogue::Bus* TransportCatalogue::FindBus(const std::string_view name)
 	{
 		if (busname_to_stop_.count(name)) {
-			return *busname_to_stop_.at(name);
+			return busname_to_stop_.at(name);
 		}
-		return Bus();
+		return nullptr;
 	}
 
-	Info::BusInfo TransportCatalogue::GetBus(const std::string& name)
+	info::BusInfo TransportCatalogue::GetBus(const std::string& name)
 	{
-		Bus bus = FindBus(name);
-		if (!bus.name.empty()) {
-			//	PrintBus(bus);
-			int quantity_stop = static_cast<int>(bus.stops.size());
-			int unuque_stop = static_cast<int>(set<const Stop*>(bus.stops.begin(), bus.stops.end()).size());
+		Bus* bus = FindBus(name);
+		
+		if (bus!=nullptr) {	
+			int quantity_stop = static_cast<int>(bus->stops.size());
+			int unuque_stop = static_cast<int>(set<const info::Stop*>(bus->stops.begin(), bus->stops.end()).size());
 			double glenght = 0;
 			unsigned lenght = 0;
 			for (int i = 0; i < quantity_stop - 1; ++i) {
-				glenght += ComputeDistance({ bus.stops[i]->latitude,bus.stops[i]->longitude }, { bus.stops[i + 1]->latitude,bus.stops[i + 1]->longitude });
-				lenght += GetLength(bus.stops[i], bus.stops[i + 1]);
+				glenght += ComputeDistance( bus->stops[i]->coordinate , bus->stops[i + 1]->coordinate);
+				lenght += GetLength(bus->stops[i], bus->stops[i + 1]);
 			}
-			return { bus.name, quantity_stop, unuque_stop, lenght, lenght / glenght };
+			return { bus->name, quantity_stop, unuque_stop, lenght, lenght / glenght };
 		}
 		return {};
 	}
 
-	Info::StopInfo TransportCatalogue::GetStop(const std::string& name)
+	info::StopInfo TransportCatalogue::GetStop(const std::string& name)
 	{
-		Info::StopInfo stop_info;
-
-		Stop stop = FindStop(name);
-		if (stop.name.empty()) {
+		info::StopInfo stop_info;
+		
+		info::Stop* stop = FindStop(name);
+		if (stop==nullptr) {
 			stop_info.status = "not found";
 			return stop_info;
 		}
-		auto stop_adress = stopname_to_stop_.at(stop.name);
+		auto stop_adress = stopname_to_stop_.at(stop->name);
 		for (auto bus : buses_) {
 			if (count(bus.stops.begin(), bus.stops.end(), stop_adress)) {
 				stop_info.buses.push_back(bus.name);
@@ -86,38 +86,13 @@ namespace Transport {
 
 	}
 
-	unsigned TransportCatalogue::GetLength(const Stop* from, const Stop* to)
+	unsigned TransportCatalogue::GetLength(const info::Stop* from, const info::Stop* to)
 	{
 		if (length_.count({ from,to })) {
 			return	length_.at({ from,to });
 		}
 		return length_.at({ to,from });
 	}
-
 	
-	void TransportCatalogue::PrintBus(TransportCatalogue::Bus bus) {
-		cout << "\n" << bus.name << " " << busname_to_stop_.at(bus.name) << endl;
-		for (auto stop : bus.stops) {
-			cout << stop->name << " " << stop << endl;
-		}
-	}
-
-	void TransportCatalogue::ShowAll()
-	{
-		cout << "STOPS:\n";
-		for (auto stop : stops_) {
-			cout << stop.name << " " << stopname_to_stop_.at(stop.name) << endl;
-		}
-
-		cout << "\nBUS:\n";
-		for (auto bus : buses_) {
-			PrintBus(bus);
-	
-		}
-		cout << "\nLENGHT\n";
-		for (auto l : length_) {
-			cout << l.second << endl;
-		}
-	}
 
 }

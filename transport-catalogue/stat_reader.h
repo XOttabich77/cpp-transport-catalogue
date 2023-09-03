@@ -3,8 +3,8 @@
 #include <iomanip>
 
 #include"transport_catalogue.h"
-namespace Transport {
-	namespace Stat_reader {
+namespace transport {
+	namespace stat_reader {
 		void ReQuest(TransportCatalogue& Tcat, std::istream& input);
 	}
 }

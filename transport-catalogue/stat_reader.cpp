@@ -1,24 +1,38 @@
 #include "stat_reader.h"
 
-namespace Transport {
+namespace transport {
 	using namespace std;
-		
-	ostream& operator<<(ostream& os, const Info::BusInfo& info) {
-		auto [name, s, u, l, c] = info;
-		os << std::setprecision(6);
-		os << "Bus "s << name << ": "s << s << " stops on route, "s << u << " unique stops, "s << l << " route length, "s << c << " curvature"s << endl;
-		return os;
-	}
-	ostream& operator<<(ostream& os, const Info::StopInfo& info) {
-		cout << ": "s << info.status;
-		for (auto bus : info.buses) {
-			cout << " "s << bus;
+	
+	namespace detail {
+		ostream& operator<<(ostream& os, const info::BusInfo& info) {			
+			os << std::setprecision(6);
+			os << "Bus "s << info.name << ": "s << info.stop_on_route << " stops on route, "s << info.unique_stop << " unique stops, "s << info.length << " route length, "s << info.curvature << " curvature"s << endl;
+			return os;
 		}
-		cout << endl;
-		return os;
+		ostream& operator<<(ostream& os, const info::StopInfo& info) {
+			os << ": "s << info.status;
+			for (auto bus : info.buses) {
+				os << " "s << bus;
+			}
+			os << endl;
+			return os;
+		}
+		ostream& Print_Bus(ostream& os, const info::BusInfo & info, const string & line) {
+			if (!info.name.empty()) {
+				os << info;
+			}
+			else {
+				os << "Bus "s << line << ": not found"s << endl;
+			}
+			return os;
+		}
+		ostream& Print_Stop(ostream& os, const info::StopInfo& info,const string & line) {
+			os << "Stop " << line << info;
+			return os;
+		}
 	}
 
-	void Stat_reader::ReQuest(TransportCatalogue& t_cat, std::istream& input)
+	void stat_reader::ReQuest(TransportCatalogue& t_cat, std::istream& input)
 	{
 		string quantity_req;
 		getline(input, quantity_req);
@@ -29,17 +43,11 @@ namespace Transport {
 			string type = line.substr(0, pos);
 			line = line.substr(pos + 1);
 			if (type == "Bus") {
-				auto info = t_cat.GetBus(line);
-				if (!info.name.empty()) {
-					cout << info;
-				}
-				else {
-					cout << "Bus "s << line << ": not found"s << endl;
-				}
+				detail::Print_Bus(cout,t_cat.GetBus(line), line);
 			}
 			if (type == "Stop") {
-				auto info = t_cat.GetStop(line);
-				cout << "Stop " << line << info;
+				detail::Print_Stop(cout,t_cat.GetStop(line),line);
+				
 			}
 		}
 
