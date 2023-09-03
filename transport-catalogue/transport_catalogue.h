@@ -10,9 +10,9 @@
 
 	#include"geo.h"
 
-namespace Transport {
+namespace transport {
 	
-	namespace Info {
+	namespace info {
 		struct BusInfo
 		{
 			std::string name;
@@ -25,9 +25,14 @@ namespace Transport {
 			std::string status;
 			std::vector<std::string> buses;
 		};
+		struct Stop
+		{
+			std::string name;
+			Coordinates coordinate;
+		};
 	}
 
-	namespace Hasher {
+	namespace hasher {
 		class StopHasher {
 		public:
 			size_t operator()(const std::pair<const void*, const void*> hash) const {
@@ -44,44 +49,40 @@ namespace Transport {
 	class TransportCatalogue
 	{
 	private:
-		struct Stop
-		{
-			std::string name;
-			double latitude;
-			double longitude;
-
-		};
+		
 		struct Bus
 		{
 			std::string name;
-			std::vector<const Stop*> stops;
+			std::vector<const info::Stop*> stops;
 		};
 
 
 	public:
 
-		void AddStop(Stop stop);
-		void AddBuss(std::string& name, const std::vector<std::string>& stops);
-		void AddLength(const std::string name_from, const std::string& name_to, unsigned l);
-		Stop FindStop(const std::string& name);
-		Bus  FindBus(const std::string& name);
-		Info::BusInfo GetBus(const std::string& name);
-		Info::StopInfo GetStop(const std::string& name);
-		unsigned GetLength(const Stop* from, const Stop* to);
+		void AddStop(const info::Stop& stop);
+		void AddBus(const std::string& name, const std::vector<std::string>& stops);
+		void AddLength(const std::string& name_from, const std::string& name_to, unsigned length);
+		// из ревью - "вообще лучше использовать int, расстояние может быть и отрицательным"
+		// из задания - Все Di — "целые __________положительные______ числа, каждое из которых не превышает 1 000 000"  
 
-		void ShowAll(); // для проверки
+		info::Stop* FindStop(const std::string_view name);
+		Bus*  FindBus(const std::string_view name);
+		info::BusInfo GetBus(const std::string& name);
+		info::StopInfo GetStop(const std::string& name);
+		
 
 	private:
 
-		std::deque <Stop> stops_;
-		std::unordered_map <std::string_view, const Stop*> stopname_to_stop_;
+		std::deque <info::Stop> stops_;
+		std::unordered_map <std::string_view, info::Stop*> stopname_to_stop_;
 
 		std::deque<Bus> buses_;
-		std::unordered_map<std::string_view, const Bus*> busname_to_stop_;
-		using KeyForMap = std::pair<const Stop*, const Stop*>;
-		std::unordered_map<KeyForMap, unsigned, Hasher::StopHasher > length_;
+		std::unordered_map<std::string_view, Bus*> busname_to_stop_;
+		using KeyForMap = std::pair<const info::Stop*, const info::Stop*>;
+		std::unordered_map<KeyForMap, unsigned, hasher::StopHasher > length_;
 
-		void PrintBus(Bus bus);
+		unsigned GetLength(const info::Stop* from, const info::Stop* to);
+		
 	};
 
 }

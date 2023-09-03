@@ -6,8 +6,8 @@
 #include <unordered_map>
 
 #include "transport_catalogue.h"
-namespace Transport {
-	namespace Request_reader {
+namespace transport {
+	namespace request_reader {
 		TransportCatalogue LoadRequest(std::istream& input);
 	}
 }
