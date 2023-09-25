@@ -1,18 +1,19 @@
 ﻿#include <iostream>
-
 #include <sstream>
-
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "json_reader.h"
+#include "svg.h"
+#include "map_renderer.h"
 
 using namespace std;
 
-
-
 int main()
 {     
-    transport::TransportCatalogue catalog = transport::request_reader::LoadRequest(cin);
-    transport::stat_reader::ReQuest(catalog, cin);
-    
+ 
+    transport::json_reader::Json_Reader test;
+    test.LoadJson(cin);
+
+    transport::TransportCatalogue catalog = transport::json_reader::LoadBaseRequest(test);
+    json::Print(json::Document(transport::json_reader::DoRequest(catalog, test)),cout);
+
 }
 
