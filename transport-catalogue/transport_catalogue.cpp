@@ -21,10 +21,11 @@ namespace transport {
 		busname_to_stop_[buses_.back().name] = &buses_.back();
 	}
 
-	void TransportCatalogue::AddLength(const std::string& name_from, const std::string& name_to, size_t length)
+	void TransportCatalogue::AddLength(const std::string& name_from, const std::string& name_to, double length)
 	{
 		auto key = make_pair(stopname_to_stop_.at(name_from), stopname_to_stop_.at(name_to));
 		length_[key] = length;
+		//cout << length <<endl;
 	}
 
 	info::Stop* TransportCatalogue::FindStop(const std::string_view name) const  
@@ -51,11 +52,11 @@ namespace transport {
 			int quantity_stop = static_cast<int>(bus->stops.size());
 			int unuque_stop = static_cast<int>(set<const info::Stop*>(bus->stops.begin(), bus->stops.end()).size());
 			double glenght = 0;
-			size_t lenght = 0;
+			double lenght = 0;
 			for (int i = 0; i < quantity_stop - 1; ++i) {
 				glenght += ComputeDistance( bus->stops[i]->coordinate , bus->stops[i + 1]->coordinate);
 				lenght += GetLength(bus->stops[i], bus->stops[i + 1]);
-			}
+			}		
 			return { bus->name, quantity_stop, unuque_stop, lenght, lenght / glenght };
 		}
 		return {};
@@ -93,7 +94,7 @@ namespace transport {
 		return bus->circle;
 	}
 
-	size_t TransportCatalogue::GetLength(const info::Stop* from, const info::Stop* to) const
+	double TransportCatalogue::GetLength(const info::Stop* from, const info::Stop* to) const
 	{
 		if (length_.count({ from,to })) {
 			return	length_.at({ from,to });

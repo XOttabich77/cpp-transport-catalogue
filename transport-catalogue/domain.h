@@ -17,8 +17,8 @@ namespace transport {
 		{
 			std::string name;
 			int stop_on_route;
-			int unique_stop;
-			size_t length;
+			int unique_stop;			
+			double length;
 			double curvature;
 		};
 		struct StopInfo {

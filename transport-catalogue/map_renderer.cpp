@@ -1,4 +1,5 @@
 #include "map_renderer.h"
+#include <cassert>
 #include <list>
 
 using namespace std;
@@ -100,6 +101,7 @@ void renderer::MapRenderer::AddBusLine(svg::Document& map_route)
 		svg::Polyline route;
 		for (const auto& stop : bus.second) {
 			route.AddPoint(stop.coordinate);
+		//	cout <<"!!!!!!!!!!!!!!!!!!!------ " << stop.coordinate.x <<"   " << stop.coordinate.y <<endl;
 		}
 		route.SetStrokeColor(render_setting_.color_palette[ counter % render_setting_.color_palette.size() ])
 			.SetStrokeWidth(render_setting_.line_width)

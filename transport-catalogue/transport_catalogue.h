@@ -29,7 +29,7 @@ namespace transport {
 
 		void AddStop(const info::Stop& stop);
 		void AddBus(const std::string& name, const std::vector<std::string>& stops, bool circle);
-		void AddLength(const std::string& name_from, const std::string& name_to, size_t length);
+		void AddLength(const std::string& name_from, const std::string& name_to, double length);
 		
 		info::Stop* FindStop(const std::string_view name) const;
 		Bus*  FindBus(const std::string_view name) const;
@@ -50,9 +50,9 @@ namespace transport {
 		std::deque<Bus> buses_;
 		std::unordered_map<std::string_view, Bus*> busname_to_stop_;
 		using KeyForMap = std::pair<const info::Stop*, const info::Stop*>;
-		std::unordered_map<KeyForMap, size_t, hasher::StopHasher > length_;
+		std::unordered_map<KeyForMap, double, hasher::StopHasher > length_;
 
-		size_t GetLength(const info::Stop* from, const info::Stop* to) const;
+		double GetLength(const info::Stop* from, const info::Stop* to) const;
 		
 	};
 

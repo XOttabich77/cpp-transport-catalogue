@@ -1,4 +1,5 @@
 #include "json_reader.h"
+#include "json_builder.h"
 
 using namespace std;
 
@@ -30,7 +31,7 @@ transport::TransportCatalogue transport::json_reader::LoadBaseRequest(const Json
    // загружаем растояния между остановками
     for (const auto & [name, to] : lengths) {
         for (auto & [name_to,length] : to) {
-            result.AddLength(name, name_to, length.AsInt());         
+            result.AddLength(name, name_to, length.AsDouble());         
         }
     }
    // зашружаем маршруты
@@ -62,46 +63,56 @@ namespace detail {
         return result;
     }
 
-    json::Dict DoStop(const json::Node& el, const transport::TransportCatalogue& catalog) {
-        json::Dict node;
+    json::Node DoStop(const json::Node& el, const transport::TransportCatalogue& catalog) {
+       
+        json::Builder stopnode;
         const string name = el.AsMap().at("name"s).AsString();
-        node["request_id"s] = el.AsMap().at("id"s).AsInt();
+        stopnode.StartDict()
+            .Key("request_id"s).Value(el.AsMap().at("id"s).AsInt());
         const transport::info::StopInfo info = catalog.GetStop(name);
         if (info.status == "not found"s) {
-            node["error_message"s] = "not found"s;
+            stopnode.Key("error_message"s).Value("not found"s);
         }
         else {
-            node["buses"s] = detail::GetAllBuses(info.buses);
+            stopnode.Key("buses"s).Value(detail::GetAllBuses(info.buses));
         }
-        return node;
+        stopnode.EndDict();
+        return stopnode.Build();
     }
 
-    json::Dict DoBus(const json::Node& el, const transport::TransportCatalogue& catalog) {
-        json::Dict node;
+   
+    json::Node DoBus(const json::Node& el, const transport::TransportCatalogue& catalog) {
+      
+        json::Builder busnode;
         const string name = el.AsMap().at("name"s).AsString();
         const transport::info::BusInfo info = catalog.GetBus(name);
-        node["request_id"s] = el.AsMap().at("id"s).AsInt();
+        busnode.StartDict()
+            .Key("request_id"s).Value(el.AsMap().at("id"s).AsInt());
         if (info.name.empty()) {
-            node["error_message"s] = "not found"s;
+            busnode.Key("error_message"s).Value("not found"s);
         }
         else {
-            node["curvature"s] = info.curvature;
-            node["route_length"s] = static_cast<int>(info.length);
-            node["stop_count"s] = info.stop_on_route;
-            node["unique_stop_count"s] = info.unique_stop;
+            busnode.Key("curvature"s).Value(info.curvature)             
+                 .Key("route_length"s).Value(info.length)
+                    .Key("stop_count"s).Value(info.stop_on_route)
+                        .Key("unique_stop_count"s).Value(info.unique_stop);
         }
-        return node;
+        busnode.EndDict();
+        return busnode.Build();
     }
 
-    json::Dict DoMap(const json::Node& el, const transport::TransportCatalogue& catalog, const transport::json_reader::Json_Reader& request) {
-        json::Dict node;
-        node["request_id"s] = el.AsMap().at("id"s).AsInt();
-        renderer::MapRenderer map(catalog,  request.GetRenderSetting());
+    json::Node DoMap(const json::Node& el, const transport::TransportCatalogue& catalog, const transport::json_reader::Json_Reader& request) {
+       
+        json::Builder mapnode;
+        mapnode.StartDict()
+            .Key("request_id"s).Value(el.AsMap().at("id"s).AsInt());
+        renderer::MapRenderer map(catalog, request.GetRenderSetting());
         map.MakeMap();
         std::ostringstream oss;
         map.RenderMap(oss);
-        node["map"s] = oss.str();
-        return node;
+        mapnode.Key("map"s).Value(oss.str())
+            .EndDict();
+        return mapnode.Build();
     }
 }
 json::Array transport::json_reader::DoRequest(const transport::TransportCatalogue& catalog,const Json_Reader& request)
