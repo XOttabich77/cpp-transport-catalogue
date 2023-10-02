@@ -4,34 +4,25 @@ using namespace json;
 
 
 BuilderContext::BuilderContext(Builder& builder) : builder_(builder) {}
+AfterArray json::BuilderContext::StartArray() { return builder_.StartArray(); }
+Builder& json::BuilderContext::EndArray() { return builder_.EndArray(); }
+Builder& json::BuilderContext::Value(Node::Value value) { return builder_.Value(value); }
+AfterKey& json::BuilderContext::Key(std::string value) { return builder_.Key(value); }
+AfterDictionary json::BuilderContext::StartDict() { return builder_.StartDict(); }
+Builder& json::BuilderContext::EndDict() { return builder_.EndDict(); }
 
-InArray InArray::Value(Node::Value value) {
-    builder_.Value(value);
-    return *this;
+Node json::BuilderContext::Build()
+{
+    return builder_.Build();
 }
 
-InArray InArray::StartArray() { return builder_.StartArray(); }
-
-AfterDictionary InArray::StartDict() { return builder_.StartDict(); }
-
-Builder& InArray::EndArray() { return builder_.EndArray(); }
-
-AfterKey AfterDictionary::Key(std::string key) { return builder_.Key(key); }
-
-Builder& AfterDictionary::EndDict() { return builder_.EndDict(); }
-
-AfterKey AfterValue::Key(std::string value) { return builder_.Key(value); }
-
-Builder& AfterValue::EndDict() { return builder_.EndDict(); }
+json::AfterKey::AfterKey(Builder& builder)
+    : BuilderContext(builder) {}
 
 AfterValue AfterKey::Value(Node::Value value) {
     builder_.Value(value);
     return v_context_;
 }
-
-InArray AfterKey::StartArray() { return builder_.StartArray(); }
-
-AfterDictionary AfterKey::StartDict() { return builder_.StartDict(); }
 
 
 Builder& json::Builder::Value(Node::Value value)
@@ -59,7 +50,7 @@ Builder& json::Builder::Value(Node::Value value)
     throw std::logic_error("Error setting the value"s);
 }
 
-InArray json::Builder::StartArray()
+AfterArray json::Builder::StartArray()
 {
     if (!root_.IsNull()) {
         throw std::logic_error("a node exists"s);

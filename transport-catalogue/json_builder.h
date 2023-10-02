@@ -7,48 +7,65 @@
 namespace json {
 
     class Builder;
-    class AfterDictionary;  
+    class AfterDictionary;
     class AfterKey;
+    class AfterValue;
+    class AfterArray;
 
     class BuilderContext {
     public:
         BuilderContext(Builder& builder);
+
+        AfterArray StartArray();
+        Builder& EndArray();
+        Builder& Value(Node::Value value);
+        AfterKey& Key(std::string value);
+        AfterDictionary StartDict();
+        Builder& EndDict();
+        Node Build();
+
     protected:
         Builder& builder_;
     };
 
-    class InArray : public BuilderContext {
-    public:
-        InArray Value(Node::Value value);
-        InArray StartArray();
-        AfterDictionary StartDict();
-        Builder& EndArray();       
+    class AfterArray : public BuilderContext {
+    public:           
+        AfterKey& Key(std::string value) = delete;
+        Builder& EndDict() = delete;
+        Node Build() = delete;
     };
 
     class AfterDictionary : public BuilderContext {
-    public:
-        AfterKey Key(std::string key);
-        Builder& EndDict();      
+    public:        
+        AfterArray StartArray() = delete;
+        Builder& EndArray() = delete;
+        Builder& Value(Node::Value value) = delete;
+        AfterDictionary StartDict() = delete;
+        Node Build() = delete;
     };
-        
+
     class AfterValue : public BuilderContext {
-    public:
-        AfterKey Key(std::string value);
-        Builder& EndDict();
+    public:       
+        Array StartArray() = delete;
+        Builder& EndArray() = delete;
+        Builder& Value(Node::Value value) = delete;
+        AfterDictionary StartDict() = delete;
+        Node Build() = delete;
     };
 
     class AfterKey : public BuilderContext {
     public:
-        AfterKey(Builder& builder) : 
-            BuilderContext(builder) 
-        {}
-        AfterValue Value(Node::Value value);     
-        InArray StartArray();
-        AfterDictionary StartDict();     
+        AfterKey(Builder& builder);
+        AfterValue Value(Node::Value value);
+        Builder& EndArray() = delete;
+        AfterKey& Key(std::string value) = delete;
+        Builder& EndDict() = delete;
+        Node Build() = delete;
+
     private:
         AfterValue v_context_{ builder_ };
-       
     };
+    
 
     using namespace std::string_literals;
 
@@ -57,11 +74,11 @@ namespace json {
     private:
         AfterDictionary diccontext_{ *this };
         AfterKey  keycontext_{ *this };
-        InArray arraycontext_{ *this };
+        AfterArray arraycontext_{ *this };
 
     public:        
         Builder& Value(Node::Value value);               
-        InArray StartArray();
+        AfterArray StartArray();
         Builder& EndArray();
         AfterDictionary& StartDict();
         Builder& EndDict();
