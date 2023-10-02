@@ -18,7 +18,7 @@ namespace json {
         AfterArray StartArray();
         Builder& EndArray();
         Builder& Value(Node::Value value);
-        AfterKey& Key(std::string value);
+        AfterKey Key(std::string value);
         AfterDictionary StartDict();
         Builder& EndDict();
         Node Build();
@@ -29,7 +29,7 @@ namespace json {
 
     class AfterArray : public BuilderContext {
     public:           
-        AfterKey& Key(std::string value) = delete;
+        AfterKey Key(std::string value) = delete;
         Builder& EndDict() = delete;
         Node Build() = delete;
     };
@@ -48,7 +48,7 @@ namespace json {
         AfterKey(Builder& builder);
         AfterDictionary Value(Node::Value value);
         Builder& EndArray() = delete;
-        AfterKey& Key(std::string value) = delete;
+        AfterKey Key(std::string value) = delete;
         Builder& EndDict() = delete;
         Node Build() = delete;
     private:
@@ -71,7 +71,7 @@ namespace json {
         Builder& EndArray();
         AfterDictionary& StartDict();
         Builder& EndDict();
-        AfterKey& Key(std::string key);
+        AfterKey Key(std::string key);
         Node Build() const;
 
     private:

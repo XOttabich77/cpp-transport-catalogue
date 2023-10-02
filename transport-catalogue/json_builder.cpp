@@ -7,7 +7,7 @@ BuilderContext::BuilderContext(Builder& builder) : builder_(builder) {}
 AfterArray json::BuilderContext::StartArray() { return builder_.StartArray(); }
 Builder& json::BuilderContext::EndArray() { return builder_.EndArray(); }
 Builder& json::BuilderContext::Value(Node::Value value) { return builder_.Value(value); }
-AfterKey& json::BuilderContext::Key(std::string value) { return builder_.Key(value); }
+AfterKey json::BuilderContext::Key(std::string value) { return builder_.Key(value); }
 AfterDictionary json::BuilderContext::StartDict() { return builder_.StartDict(); }
 Builder& json::BuilderContext::EndDict() { return builder_.EndDict(); }
 
@@ -135,7 +135,7 @@ Builder& json::Builder::EndDict()
     throw std::logic_error("dictionary not close"s);
 }
 
-AfterKey& json::Builder::Key(std::string key)
+AfterKey json::Builder::Key(std::string key)
 {
     if (nodes_stack_.empty() || !root_.IsNull()) {
         throw std::logic_error("empty or null"s);
