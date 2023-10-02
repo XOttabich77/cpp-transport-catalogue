@@ -19,7 +19,7 @@ Node json::BuilderContext::Build()
 json::AfterKey::AfterKey(Builder& builder)
     : BuilderContext(builder) {}
 
-AfterValue AfterKey::Value(Node::Value value) {
+AfterDictionary AfterKey::Value(Node::Value value) {
     builder_.Value(value);
     return v_context_;
 }

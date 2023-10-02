@@ -8,8 +8,7 @@ namespace json {
 
     class Builder;
     class AfterDictionary;
-    class AfterKey;
-    class AfterValue;
+    class AfterKey;    
     class AfterArray;
 
     class BuilderContext {
@@ -43,27 +42,17 @@ namespace json {
         AfterDictionary StartDict() = delete;
         Node Build() = delete;
     };
-
-    class AfterValue : public BuilderContext {
-    public:       
-        Array StartArray() = delete;
-        Builder& EndArray() = delete;
-        Builder& Value(Node::Value value) = delete;
-        AfterDictionary StartDict() = delete;
-        Node Build() = delete;
-    };
-
+       
     class AfterKey : public BuilderContext {
     public:
         AfterKey(Builder& builder);
-        AfterValue Value(Node::Value value);
+        AfterDictionary Value(Node::Value value);
         Builder& EndArray() = delete;
         AfterKey& Key(std::string value) = delete;
         Builder& EndDict() = delete;
         Node Build() = delete;
-
     private:
-        AfterValue v_context_{ builder_ };
+        AfterDictionary v_context_{ builder_ };
     };
     
 
