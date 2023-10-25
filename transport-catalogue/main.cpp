@@ -3,6 +3,7 @@
 #include "json_reader.h"
 #include "svg.h"
 #include "map_renderer.h"
+#include "request_handler.h"
 
 
 
@@ -19,12 +20,13 @@ int main()
 
     transport::TransportCatalogue catalog = transport::json_reader::LoadBaseRequest(test);
     json::Print(json::Document(transport::json_reader::DoRequest(catalog, test)),cout);
-    
-    using namespace std::this_thread; // sleep_for, sleep_until
-    using namespace std::chrono; // nanoseconds, system_clock, seconds
+//    json::Print(json::Document(transport::DoRequest(catalog, test)), cout);
+   
+ //   using namespace std::this_thread; // sleep_for, sleep_until
+ //   using namespace std::chrono; // nanoseconds, system_clock, seconds
 
-    sleep_for(seconds(30));
-
+ //   sleep_for(seconds(30));
+   
 
 }
 

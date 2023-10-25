@@ -1,5 +1,7 @@
 #include "json_reader.h"
 #include "json_builder.h"
+#include "router.h"
+#include "transport_router.h"
 
 using namespace std;
 
@@ -8,7 +10,8 @@ void transport::json_reader::Json_Reader::LoadJson(std::istream& input)
     json::Document base= json::Load(input);
     base_requests_ = base.GetRoot().AsMap().at("base_requests"s).AsArray();
     stat_requests_ = base.GetRoot().AsMap().at("stat_requests"s).AsArray();
-    render_settings_ = base.GetRoot().AsMap().at("render_settings"s).AsMap();;
+    render_settings_ = base.GetRoot().AsMap().at("render_settings"s).AsMap();
+    routing_settings_ = base.GetRoot().AsMap().at("routing_settings"s).AsMap();
 }
 
 using MapLengths = unordered_map <string, json::Dict>;
@@ -18,7 +21,7 @@ transport::TransportCatalogue transport::json_reader::LoadBaseRequest(const Json
     const json::Array& base = db.GetBaseRequest();
     transport::TransportCatalogue result;
     MapLengths lengths;
-    // создаем справочник остановок          
+    // СЃРѕР·РґР°РµРј СЃРїСЂР°РІРѕС‡РЅРёРє РѕСЃС‚Р°РЅРѕРІРѕРє          
     for (const auto &el : base) {
        if (el.AsMap().at("type"s).AsString() == "Stop"sv) {
             const string name = el.AsMap().at("name"s).AsString();
@@ -28,13 +31,13 @@ transport::TransportCatalogue transport::json_reader::LoadBaseRequest(const Json
             result.AddStop({ name, latitude, longitude });
         }
     }    
-   // загружаем растояния между остановками
+   // Р·Р°РіСЂСѓР¶Р°РµРј СЂР°СЃС‚РѕСЏРЅРёСЏ РјРµР¶РґСѓ РѕСЃС‚Р°РЅРѕРІРєР°РјРё
     for (const auto & [name, to] : lengths) {
         for (auto & [name_to,length] : to) {
             result.AddLength(name, name_to, length.AsDouble());         
         }
     }
-   // зашружаем маршруты
+   // Р·Р°С€СЂСѓР¶Р°РµРј РјР°СЂС€СЂСѓС‚С‹
     for (const auto& el : base) {      
         if (el.AsMap().at("type"s).AsString() == "Bus"s) {
             const string name = el.AsMap().at("name"s).AsString();
@@ -46,13 +49,14 @@ transport::TransportCatalogue transport::json_reader::LoadBaseRequest(const Json
             if (!circle) {
                 vector <string> back_bus = { bus_forward.begin(),prev( bus_forward.end() ) };
                 bus_forward.insert( bus_forward.end(), back_bus.rbegin(), back_bus.rend() );
-            }
-            
+            }            
             result.AddBus(name, bus_forward,circle);
         }
     }
     return result;
 }
+
+
 namespace detail {
    
     json::Array GetAllBuses(const std::vector<std::string>& buses) {
@@ -114,6 +118,25 @@ namespace detail {
             .EndDict();
         return mapnode.Build();
     }
+    json::Node DoRoute(const json::Node& el, const transport::TransportCatalogue& catalog, const transport::json_reader::Json_Reader& request) {
+      
+        static  router::TransportRouter route(catalog, request.GetRoutingSetting());    
+        string from = el.AsMap().at("from"s).AsString();
+        string to = el.AsMap().at("to"s).AsString();
+        int id = el.AsMap().at("id"s).AsInt();
+
+        auto result = route.FindRouteAsArray(from, to, id);
+        if (result.has_value()) {
+            return result.value();
+        }
+        
+        json::Builder routenode;
+        routenode.StartDict().
+            Key("request_id"s).Value(id).
+            Key("error_message"s).Value("not found"s).
+            EndDict();
+        return routenode.Build();
+    }
 }
 json::Array transport::json_reader::DoRequest(const transport::TransportCatalogue& catalog,const Json_Reader& request)
 {
@@ -128,6 +151,12 @@ json::Array transport::json_reader::DoRequest(const transport::TransportCatalogu
         else if (el.AsMap().at("type"s).AsString() == "Map"s) {           
             result.push_back(detail::DoMap(el, catalog, request));
         }
+        else if (el.AsMap().at("type"s).AsString() == "Route"s){          
+            result.push_back(detail::DoRoute(el, catalog, request));
+        }
     }
     return result;
 }
+
+
+

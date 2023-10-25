@@ -138,7 +138,7 @@ void renderer::MapRenderer::AddNameBus(svg::Document& map_route)
 		
 		map_route.Add(bus_background);
 		map_route.Add(bus_name);
-		int back_stop = (bus.second.size() - 1) / 2;
+		size_t back_stop = (bus.second.size() - 1) / 2; 
 		if (!db_.IsBusCircle(bus.first) && bus.second[0].name!= bus.second[back_stop].name) {			
 			bus_background.SetPosition(bus.second[back_stop].coordinate);
 			bus_name.SetPosition(bus.second[back_stop].coordinate);
@@ -155,7 +155,7 @@ void renderer::MapRenderer::AddStopOnLine(svg::Document& map_route)
 	
 	set<StopOnMap> all_stops;
 
-	// Изображение остановки
+	// РР·РѕР±СЂР°Р¶РµРЅРёРµ РѕСЃС‚Р°РЅРѕРІРєРё
 	for (const auto& [name,stops] : buses_) {		
 		all_stops.insert(stops.begin(), stops.end());		
 	}
@@ -167,7 +167,7 @@ void renderer::MapRenderer::AddStopOnLine(svg::Document& map_route)
 
 		map_route.Add(stop_on_map);
 	}
-	// Название остановки
+	// РќР°Р·РІР°РЅРёРµ РѕСЃС‚Р°РЅРѕРІРєРё
 	for (auto stop : all_stops) {
 		svg::Text stop_background;
 		stop_background.SetData(stop.name)

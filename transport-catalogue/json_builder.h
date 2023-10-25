@@ -60,16 +60,11 @@ namespace json {
 
     class Builder {
    
-    private:
-        AfterDictionary diccontext_{ *this };
-        AfterKey  keycontext_{ *this };
-        AfterArray arraycontext_{ *this };
-
     public:        
         Builder& Value(Node::Value value);               
         AfterArray StartArray();
         Builder& EndArray();
-        AfterDictionary& StartDict();
+        AfterDictionary StartDict();
         Builder& EndDict();
         AfterKey Key(std::string key);
         Node Build() const;

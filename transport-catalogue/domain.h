@@ -1,11 +1,11 @@
 #pragma once
-#include <string>
+//#include <string>
 //#include<deque>
 //#include<unordered_map>
 //#include<string_view>
 //#include<iostream>
 //#include<set>
-#include<vector>
+//#include<vector>
 //#include<algorithm>
 
 #include"geo.h"

@@ -39,7 +39,11 @@ namespace transport {
 		const std::deque<Bus>& GetAllBus() const {
 			return buses_;
 		}
+		const std::deque <info::Stop>& GetAllStops() const {
+			return stops_;
+		}
 		bool IsBusCircle(const std::string& name) const;
+		double GetLength(const info::Stop* from, const info::Stop* to) const;
 		
 
 	private:
@@ -50,10 +54,7 @@ namespace transport {
 		std::deque<Bus> buses_;
 		std::unordered_map<std::string_view, Bus*> busname_to_stop_;
 		using KeyForMap = std::pair<const info::Stop*, const info::Stop*>;
-		std::unordered_map<KeyForMap, double, hasher::StopHasher > length_;
-
-		double GetLength(const info::Stop* from, const info::Stop* to) const;
-		
+		std::unordered_map<KeyForMap, double, hasher::StopHasher > length_;		
 	};
 
 }

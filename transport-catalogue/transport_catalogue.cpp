@@ -24,8 +24,7 @@ namespace transport {
 	void TransportCatalogue::AddLength(const std::string& name_from, const std::string& name_to, double length)
 	{
 		auto key = make_pair(stopname_to_stop_.at(name_from), stopname_to_stop_.at(name_to));
-		length_[key] = length;
-		//cout << length <<endl;
+		length_[key] = length;		
 	}
 
 	info::Stop* TransportCatalogue::FindStop(const std::string_view name) const  

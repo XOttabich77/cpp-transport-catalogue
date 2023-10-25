@@ -62,7 +62,7 @@ AfterArray json::Builder::StartArray()
     auto ptr = std::make_unique<Node>();
     *ptr = json::Array{};
     nodes_stack_.push_back(std::move(ptr));
-    return arraycontext_;
+    return AfterArray{ *this };
 }
 
 Builder& json::Builder::EndArray()
@@ -91,7 +91,7 @@ Builder& json::Builder::EndArray()
     throw std::logic_error("array not close"s);
 }
 
-AfterDictionary& json::Builder::StartDict()
+AfterDictionary json::Builder::StartDict()
 {
     if (!root_.IsNull()) {
         throw std::logic_error("a node exists"s);
@@ -104,7 +104,7 @@ AfterDictionary& json::Builder::StartDict()
     auto ptr = std::make_unique<Node>();
     *ptr = json::Dict{};
     nodes_stack_.push_back(std::move(ptr));
-    return diccontext_;
+    return AfterDictionary{ *this };
 }
 
 Builder& json::Builder::EndDict()
@@ -146,7 +146,7 @@ AfterKey json::Builder::Key(std::string key)
     auto ptr = std::make_unique<Node>();
     *ptr = std::move(key);
     nodes_stack_.push_back(std::move(ptr));;
-    return keycontext_;
+    return AfterKey{ *this };
 }
 
 Node json::Builder::Build() const
