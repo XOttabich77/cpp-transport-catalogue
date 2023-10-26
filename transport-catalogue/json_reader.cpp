@@ -2,6 +2,8 @@
 #include "json_builder.h"
 #include "router.h"
 #include "transport_router.h"
+#include <variant>
+#include <list>
 
 using namespace std;
 
@@ -67,17 +69,27 @@ namespace detail {
         return result;
     }
 
+    json::Node Error(int id) {
+        json::Builder routenode;
+        routenode.StartDict().
+            Key("request_id"s).Value(id).
+            Key("error_message"s).Value("not found"s).
+            EndDict();
+        return routenode.Build();
+    }
+
     json::Node DoStop(const json::Node& el, const transport::TransportCatalogue& catalog) {
        
         json::Builder stopnode;
         const string name = el.AsMap().at("name"s).AsString();
-        stopnode.StartDict()
-            .Key("request_id"s).Value(el.AsMap().at("id"s).AsInt());
+        int id = el.AsMap().at("id"s).AsInt();
         const transport::info::StopInfo info = catalog.GetStop(name);
         if (info.status == "not found"s) {
-            stopnode.Key("error_message"s).Value("not found"s);
+            return Error(id);
         }
         else {
+            stopnode.StartDict()
+                .Key("request_id"s).Value(id);
             stopnode.Key("buses"s).Value(detail::GetAllBuses(info.buses));
         }
         stopnode.EndDict();
@@ -90,12 +102,13 @@ namespace detail {
         json::Builder busnode;
         const string name = el.AsMap().at("name"s).AsString();
         const transport::info::BusInfo info = catalog.GetBus(name);
-        busnode.StartDict()
-            .Key("request_id"s).Value(el.AsMap().at("id"s).AsInt());
+        int id = el.AsMap().at("id"s).AsInt();
         if (info.name.empty()) {
-            busnode.Key("error_message"s).Value("not found"s);
+            return Error(id);
         }
         else {
+            busnode.StartDict()
+                .Key("request_id"s).Value(id);
             busnode.Key("curvature"s).Value(info.curvature)             
                  .Key("route_length"s).Value(info.length)
                     .Key("stop_count"s).Value(info.stop_on_route)
@@ -118,24 +131,42 @@ namespace detail {
             .EndDict();
         return mapnode.Build();
     }
+   
     json::Node DoRoute(const json::Node& el, const transport::TransportCatalogue& catalog, const transport::json_reader::Json_Reader& request) {
       
         static  router::TransportRouter route(catalog, request.GetRoutingSetting());    
         string from = el.AsMap().at("from"s).AsString();
         string to = el.AsMap().at("to"s).AsString();
-        int id = el.AsMap().at("id"s).AsInt();
-
-        auto result = route.FindRouteAsArray(from, to, id);
-        if (result.has_value()) {
-            return result.value();
+        int id = el.AsMap().at("id"s).AsInt();        
+      
+        auto result(std::move(route.FindRoute(from, to)));
+        if (!result.has_value()) {
+            return Error(id);
         }
-        
+
         json::Builder routenode;
-        routenode.StartDict().
-            Key("request_id"s).Value(id).
-            Key("error_message"s).Value("not found"s).
-            EndDict();
-        return routenode.Build();
+        routenode.StartDict().Key("items"s).StartArray();         
+          for(const auto& el: result.value().first){
+             routenode.StartDict();
+             if (std::holds_alternative <router::BusEdge> (el)) {
+                    const router::BusEdge& bus = get< router::BusEdge>(el);                   
+                        routenode.Key("bus"s).Value(std::string(bus.name)).
+                        Key("span_count"s).Value(bus.stops).
+                        Key("time"s).Value(bus.time).
+                        Key("type"s).Value("Bus"s);                    
+             }
+             else if (std::holds_alternative <router::WaitEdge>(el)) {
+                        const router::WaitEdge& stop = get<router::WaitEdge>(el);
+                        routenode.Key("stop_name"s).Value(std::string(stop.name)).
+                        Key("time"s).Value(stop.time).
+                        Key("type"s).Value("Wait"s);                    
+             }
+                routenode.EndDict();
+          }
+        routenode.EndArray();
+        routenode.Key("total_time"s).Value(result.value().second).
+                  Key("request_id"s).Value(id).EndDict();
+        return routenode.Build();        
     }
 }
 json::Array transport::json_reader::DoRequest(const transport::TransportCatalogue& catalog,const Json_Reader& request)

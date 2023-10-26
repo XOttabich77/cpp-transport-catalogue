@@ -2,19 +2,17 @@
 #include <unordered_map>
 #include <string_view>
 #include <string>
-//#include <iostream>
 #include <optional>
+#include <list>
+#include <variant>
 
 #include "graph.h"
 #include "router.h"
 #include "transport_catalogue.h"
-#include "json_builder.h"
 #include "json.h"
-#include "domain.h"
 
-namespace router {
-	using namespace std::string_literals;
-	using namespace transport::info;
+namespace router {	
+
 	using Time = double;
 	using Speed = double;
 
@@ -30,46 +28,40 @@ namespace router {
 			return *this;
 		}
 	};
-
 	struct Vertex {
 		graph::VertexId wait;
 		graph::VertexId go;
 	};
-	
+	struct BusEdge {
+		std::string_view name;
+		Time time;
+		int stops;
+	};
+	struct WaitEdge {
+		std::string_view name;
+		Time time;
+	};
+	using Edge = std::variant< BusEdge, WaitEdge>;
+	using Points = std::list<Edge>;
+
 	class TransportRouter {
-		
 	public:
 		TransportRouter(const transport::TransportCatalogue& db, const json::Dict& setting);
-		std::optional<json::Node> FindRouteAsArray(std::string_view from, std::string_view to, int id_request);		
-	
+		std::optional <std::pair<Points, Time>> FindRoute(std::string_view from, std::string_view to);
+
 	private:
 		RoutingSetting routing_setting_;
 		const transport::TransportCatalogue& db_;	
 		graph::DirectedWeightedGraph<Time> route_map__;
-		std::unique_ptr<graph::Router<Time>> router_;
-		
-		struct BusEdge {
-			std::string_view name;
-			Time time;
-			int stops;
-		};
-		std::unordered_map<graph::EdgeId, BusEdge> bus_edge_;
-		
-		struct WaitEdge {
-			std::string_view name;
-			Time time;
-		};
+		std::unique_ptr<graph::Router<Time>> router_;				
+		std::unordered_map<graph::EdgeId, BusEdge> bus_edge_;		
 		std::unordered_map<graph::EdgeId, WaitEdge> wait_edge_;	
-
 		std::unordered_map<std::string_view, Vertex> stop_id_;
 
 		void MakeMapRouter();
 		void MakeWaitEdge();
 		void MakeBusEdge();
 		Time GetTimeFromSpeed(double v) const;
-		json::Node GetEdgesAsMap(graph::EdgeId id);
-
-
-
+		Edge GetEdge(graph::EdgeId id);
 	};
 }
