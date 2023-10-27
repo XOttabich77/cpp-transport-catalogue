@@ -1,13 +1,11 @@
 #include "transport_router.h"
-#include <variant>
 
 
-router::TransportRouter::TransportRouter(const transport::TransportCatalogue& db, const json::Dict& setting):
-	db_(db)
+router::TransportRouter::TransportRouter(const transport::TransportCatalogue& db, const Time wait_time, const Speed speed):
+	db_(db)	
 {
 	using namespace std::literals;
-	routing_setting_.SetWaitingTime(setting.at("bus_wait_time"s).AsDouble()).
-		SetBusSpeed(setting.at("bus_velocity"s).AsDouble());
+	routing_setting_.SetWaitingTime(wait_time).SetBusSpeed(speed);
 	MakeMapRouter();
 }
 std::optional<std::pair<router::Points, router::Time>> router::TransportRouter::FindRoute(std::string_view from, std::string_view to)
@@ -20,9 +18,8 @@ std::optional<std::pair<router::Points, router::Time>> router::TransportRouter::
 	for (auto i = 0; i < info.value().edges.size(); ++i) {
 		graph::EdgeId id = info.value().edges[i];
 		points_of_route.push_back(GetEdge(id));
-	}
-	std::pair<Points, Time> result = { points_of_route ,info.value().weight };
-	return result;
+	}	
+	return std::make_pair( points_of_route, info.value().weight );
 }
 
 void router::TransportRouter::MakeMapRouter()
@@ -66,9 +63,9 @@ void router::TransportRouter::MakeBusEdge()
 	}
 }
 
-router::Time router::TransportRouter::GetTimeFromSpeed(double v) const
+router::Time router::TransportRouter::GetTimeFromSpeed(double lenght) const
 {
-	return 60 * v / (routing_setting_.bus_velocity * 1000);
+	return 60 * lenght / (routing_setting_.bus_velocity * 1000);
 }
 router::Edge router::TransportRouter::GetEdge(graph::EdgeId id)
 {

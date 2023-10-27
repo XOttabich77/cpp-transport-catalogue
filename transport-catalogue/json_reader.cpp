@@ -134,7 +134,9 @@ namespace detail {
    
     json::Node DoRoute(const json::Node& el, const transport::TransportCatalogue& catalog, const transport::json_reader::Json_Reader& request) {
       
-        static  router::TransportRouter route(catalog, request.GetRoutingSetting());    
+        router::Time time = request.GetRoutingSetting().at("bus_wait_time"s).AsDouble();
+        router::Speed speed = request.GetRoutingSetting().at("bus_velocity"s).AsDouble();
+        static  router::TransportRouter route(catalog, time, speed );    
         string from = el.AsMap().at("from"s).AsString();
         string to = el.AsMap().at("to"s).AsString();
         int id = el.AsMap().at("id"s).AsInt();        

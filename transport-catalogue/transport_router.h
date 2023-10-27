@@ -9,7 +9,7 @@
 #include "graph.h"
 #include "router.h"
 #include "transport_catalogue.h"
-#include "json.h"
+
 
 namespace router {	
 
@@ -46,7 +46,7 @@ namespace router {
 
 	class TransportRouter {
 	public:
-		TransportRouter(const transport::TransportCatalogue& db, const json::Dict& setting);
+		TransportRouter(const transport::TransportCatalogue& db, const Time wait_time, const Speed speed);
 		std::optional <std::pair<Points, Time>> FindRoute(std::string_view from, std::string_view to);
 
 	private:
