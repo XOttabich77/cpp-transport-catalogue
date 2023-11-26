@@ -1,18 +1,19 @@
 #pragma once
-//#include <string>
+#include <string>
 //#include<deque>
 //#include<unordered_map>
 //#include<string_view>
 //#include<iostream>
 //#include<set>
-//#include<vector>
+#include<vector>
 //#include<algorithm>
 
 #include"geo.h"
 
 namespace transport {
 
-	namespace info {
+    namespace info {
+
 		struct BusInfo
 		{
 			std::string name;
@@ -29,7 +30,14 @@ namespace transport {
 		{
 			std::string name;
 			geo::Coordinates coordinate;
-		};
+        };
+        struct Bus
+        {
+            std::string name;
+            std::vector<const info::Stop*> stops;
+            bool circle;
+        };
+
 	}
 
 	namespace hasher {

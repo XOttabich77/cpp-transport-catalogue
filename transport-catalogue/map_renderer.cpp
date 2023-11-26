@@ -14,6 +14,7 @@ namespace renderer {
 				return ColorArray(node);
 			}
 			assert(false && "Color not string not array");
+            return svg::Color{};
 		}
 		svg::Color ColorArray(const json::Node& node) {
 			json::Array color_array = node.AsArray();
@@ -40,31 +41,36 @@ namespace renderer {
 		}
 	}
 }
+    renderer::RenderSetting renderer::SetRenderSetting(const json::Dict& setting){
+        renderer::RenderSetting  render_setting;
+            render_setting.width = setting.at("width"s).AsDouble();
+            render_setting.height = setting.at("height"s).AsDouble();
+            render_setting.padding = setting.at("padding"s).AsDouble();
+            render_setting.line_width = setting.at("line_width"s).AsDouble();
+            render_setting.stop_radius = setting.at("stop_radius"s).AsDouble();
+            render_setting.bus_label_font_size = setting.at("bus_label_font_size"s).AsInt();
+            {
+                const json::Array tmp = setting.at("bus_label_offset"s).AsArray();
+                render_setting.bus_label_offset = { tmp[0].AsDouble(),tmp[1].AsDouble()};
+            }
+            render_setting.stop_label_font_size = setting.at("stop_label_font_size"s).AsInt();
+            {
+                const json::Array tmp = setting.at("stop_label_offset"s).AsArray();
+                render_setting.stop_label_offset = { tmp[0].AsDouble(),tmp[1].AsDouble() };
+            }
+            render_setting.underlayer_color =  renderer::detail::ColorFromNode(setting.at("underlayer_color"s));
+            render_setting.underlayer_width = setting.at("underlayer_width"s).AsDouble();
+
+            for (auto& node: setting.at("color_palette"s).AsArray()) {
+                render_setting.color_palette.push_back( renderer::detail::ColorFromNode(node));
+            }
+            return render_setting;
+    }
 
 renderer::MapRenderer::MapRenderer(const transport::TransportCatalogue& db, const json::Dict& setting) :
 	db_(db)
-	{	
-		render_setting_.width = setting.at("width"s).AsDouble();
-		render_setting_.height = setting.at("height"s).AsDouble();
-		render_setting_.padding = setting.at("padding"s).AsDouble();
-		render_setting_.line_width = setting.at("line_width"s).AsDouble();
-		render_setting_.stop_radius = setting.at("stop_radius"s).AsDouble();
-		render_setting_.bus_label_font_size = setting.at("bus_label_font_size"s).AsInt();
-		{
-			const json::Array tmp = setting.at("bus_label_offset"s).AsArray();
-			render_setting_.bus_label_offset = { tmp[0].AsDouble(),tmp[1].AsDouble()};
-		}		
-		render_setting_.stop_label_font_size = setting.at("stop_label_font_size"s).AsInt();
-		{
-			const json::Array tmp = setting.at("stop_label_offset"s).AsArray();
-			render_setting_.stop_label_offset = { tmp[0].AsDouble(),tmp[1].AsDouble() };
-		}
-		render_setting_.underlayer_color = detail::ColorFromNode(setting.at("underlayer_color"s));
-		render_setting_.underlayer_width = setting.at("underlayer_width"s).AsDouble();
-					
-		for (auto& node: setting.at("color_palette"s).AsArray()) {
-			render_setting_.color_palette.push_back(detail::ColorFromNode(node));
-		}
+    {
+            render_setting_=renderer::SetRenderSetting(setting);
 		
 	}
 
@@ -90,7 +96,7 @@ void renderer::MapRenderer::MakeMap()
 		for (const auto& stop : bus.stops) {
 			tmp.push_back({stop->name, screen_coordinate({ stop->coordinate.lat, stop->coordinate.lng }) });
 		}
-		buses_[bus.name] = move(tmp);
+        buses_[bus.name] = tmp;
 	}
 }
 
@@ -100,8 +106,7 @@ void renderer::MapRenderer::AddBusLine(svg::Document& map_route)
 	for (const auto& bus : buses_) {
 		svg::Polyline route;
 		for (const auto& stop : bus.second) {
-			route.AddPoint(stop.coordinate);
-		//	cout <<"!!!!!!!!!!!!!!!!!!!------ " << stop.coordinate.x <<"   " << stop.coordinate.y <<endl;
+			route.AddPoint(stop.coordinate);		
 		}
 		route.SetStrokeColor(render_setting_.color_palette[ counter % render_setting_.color_palette.size() ])
 			.SetStrokeWidth(render_setting_.line_width)
@@ -159,7 +164,7 @@ void renderer::MapRenderer::AddStopOnLine(svg::Document& map_route)
 	for (const auto& [name,stops] : buses_) {		
 		all_stops.insert(stops.begin(), stops.end());		
 	}
-	for (auto stop : all_stops) {		
+    for (const auto& stop : all_stops) {
 		svg::Circle stop_on_map;
 		stop_on_map.SetCenter(stop.coordinate).
 			SetRadius(render_setting_.stop_radius)
@@ -168,7 +173,7 @@ void renderer::MapRenderer::AddStopOnLine(svg::Document& map_route)
 		map_route.Add(stop_on_map);
 	}
 	// Название остановки
-	for (auto stop : all_stops) {
+    for (const auto& stop : all_stops) {
 		svg::Text stop_background;
 		stop_background.SetData(stop.name)
 			.SetPosition(stop.coordinate)

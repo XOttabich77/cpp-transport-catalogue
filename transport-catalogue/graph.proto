@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package travel_base;
+
+message Edge{
+uint64 from = 1;
+uint64 to = 2;
+double weight = 3;
+}
+
+message IncidenceLists{
+repeated uint64 incidence = 1;
+}
+
+message Graph{
+repeated Edge edges = 1;
+repeated IncidenceLists ilist = 2;
+}
+

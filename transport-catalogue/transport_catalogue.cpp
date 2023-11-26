@@ -5,19 +5,19 @@ namespace transport {
 	using namespace std;
 	void TransportCatalogue::AddStop(const info::Stop& stop)
 	{
-		stops_.push_back(move(stop));
+        stops_.push_back(stop);
 		stopname_to_stop_[stops_.back().name] = &stops_.back();
 	}
 
 	void TransportCatalogue::AddBus(const std::string& name, const std::vector<std::string>& stops, bool circle)
-	{
-		Bus bus;
-		bus.name = move(name);
+    {
+        info::Bus bus;
+        bus.name = name;
 		bus.circle = circle;
 		for (const auto& stop : stops) {
 			bus.stops.push_back(stopname_to_stop_.at(stop));
 		}
-		buses_.push_back(move(bus));
+        buses_.push_back(bus);
 		busname_to_stop_[buses_.back().name] = &buses_.back();
 	}
 
@@ -35,7 +35,7 @@ namespace transport {
 		return nullptr;
 	}
 
-	TransportCatalogue::Bus* TransportCatalogue::FindBus(const std::string_view name) const
+    info::Bus* TransportCatalogue::FindBus(const std::string_view name) const
 	{
 		if (busname_to_stop_.count(name)) {
 			return busname_to_stop_.at(name);
@@ -44,8 +44,8 @@ namespace transport {
 	}
 
 	info::BusInfo TransportCatalogue::GetBus(const std::string& name) const
-	{
-		const Bus* bus = FindBus(name);
+    {
+        const info::Bus* bus = FindBus(name);
 		
 		if (bus!=nullptr) {	
 			int quantity_stop = static_cast<int>(bus->stops.size());
@@ -88,8 +88,8 @@ namespace transport {
 	}
 
 	bool TransportCatalogue::IsBusCircle(const std::string& name) const
-	{
-		const Bus* bus = FindBus(name);
+    {
+        const info::Bus* bus = FindBus(name);
 		return bus->circle;
 	}
 
