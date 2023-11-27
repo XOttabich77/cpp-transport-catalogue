@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package travel_base;
+
+message RoutingSettings{
+double bus_wait_time = 1;
+double bus_velocity = 2;
+}
+

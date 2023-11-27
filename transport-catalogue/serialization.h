@@ -26,7 +26,7 @@ class Serialization{
     using Setting = transport::json_reader::Json_Reader;
 public:
     explicit Serialization(const TransportCatalogue& db,const Graph& graph ,const Setting & setting);
-    void Do();
+    void StartSerilization();
 
 private:
     const TransportCatalogue db_;

@@ -87,17 +87,8 @@ std::vector<std::vector<size_t>> MakeIncidenceLists(const travel_base::DB& db){
     return rs;
 }
 
-void DeSerialization(TransportCatalogue& db,
-                     std::vector<graph::Edge<double>>& edges,
-                     std::vector<std::vector<size_t>>& incidence_lists,
-                     transport::json_reader::Json_Reader& setting)
-{
-    std::string file_name = setting.GetSerializationSetting().at("file"s).AsString();
-    std::ifstream input(file_name,ios::binary);
-    travel_base::DB protobuf_db;
-    protobuf_db.ParseFromIstream(&input);
+std::unordered_map<size_t,info::Stop*> DeSerializationStops(const travel_base::DB& protobuf_db, TransportCatalogue& db){
     std::unordered_map<size_t,info::Stop*> ptr_stops;
-
     int size_stops = protobuf_db.stops_size();
     for (int i = 0; i < size_stops; ++i) {
         info::Stop stop;
@@ -107,7 +98,12 @@ void DeSerialization(TransportCatalogue& db,
         db.AddStop(stop);
         ptr_stops[protobuf_db.stops(i).id()] = db.FindStop(stop.name);
     }
+    return ptr_stops;
+}
 
+void DeSerializationBus(const travel_base::DB& protobuf_db,
+                        TransportCatalogue& db,
+                        const std::unordered_map<size_t,info::Stop*>& ptr_stops){
     int size_buses = protobuf_db.buses_size();
     for (int i = 0; i < size_buses; ++i) {
         std::string name = protobuf_db.buses(i).name();
@@ -119,9 +115,12 @@ void DeSerialization(TransportCatalogue& db,
             std::string stop_name = ptr_stops.at(id)->name;
             stops[k]=stop_name;
         }
-        db.AddBus(name, stops, circle);        
+        db.AddBus(name, stops, circle);
     }
-
+}
+void DeSerializationLenght(const travel_base::DB& protobuf_db,
+                           TransportCatalogue& db,
+                           const std::unordered_map<size_t,info::Stop*>& ptr_stops){
     int size_length = protobuf_db.lengths_size();
     for (int i= 0; i< size_length; ++i){
         std::string name_from = ptr_stops.at(protobuf_db.lengths(i).stop_from_id())->name;
@@ -129,12 +128,27 @@ void DeSerialization(TransportCatalogue& db,
         double length = protobuf_db.lengths(i).length();
         db.AddLength(name_from, name_to, length);
     }
+}
+
+void DeSerialization(TransportCatalogue& db,
+                     std::vector<graph::Edge<double>>& edges,
+                     std::vector<std::vector<size_t>>& incidence_lists,
+                     transport::json_reader::Json_Reader& setting)
+{
+    std::string file_name = setting.GetSerializationSetting().at("file"s).AsString();
+    std::ifstream input(file_name,ios::binary);
+    travel_base::DB protobuf_db;
+    protobuf_db.ParseFromIstream(&input);
+
+    std::unordered_map<size_t,info::Stop*> ptr_stops(DeSerializationStops(protobuf_db, db));
+    DeSerializationBus(protobuf_db, db, ptr_stops);
+    DeSerializationLenght(protobuf_db, db, ptr_stops);
+
     edges = MakeEdge(protobuf_db);
     incidence_lists = MakeIncidenceLists(protobuf_db);
     setting.SetRenderSetting(MakeRenderSetting(protobuf_db));
     setting.SetRoutingSettings(MakeRoutingSettings(protobuf_db));
 }
-
 
 
 Serialization::Serialization(const TransportCatalogue& db,const Graph& graph, const Setting& setting):
@@ -145,7 +159,7 @@ Serialization::Serialization(const TransportCatalogue& db,const Graph& graph, co
     render_settings_(setting.GetRenderSetting())
     {
     }
- void Serialization::Do(){
+ void Serialization::StartSerilization(){
     SetTarget();
     AddStops();
     AddBuses();
