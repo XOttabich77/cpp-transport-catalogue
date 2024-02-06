@@ -199,3 +199,10 @@
     },
 
 ![Example svg](exm.png)
+
+Использованы технологии:
+С++17
+JSON
+SVG
+CMake
+PROTOBUF
